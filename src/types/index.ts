@@ -1,3 +1,4 @@
-import type { Switch } from './Switch'
+import type { ArgumentCreationOptions } from './ArgumentCreationOptions'
+import type { Argument } from './Argument'
 
-export type { Switch }
+export type { ArgumentCreationOptions, Argument }
