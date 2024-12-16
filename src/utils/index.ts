@@ -1,3 +1,3 @@
-import { compareTwoArrays } from './compareTwoArrays'
+import { shallowCompareTwoArrays } from './shallowCompareTwoArrays'
 
-export { compareTwoArrays }
+export { shallowCompareTwoArrays }
