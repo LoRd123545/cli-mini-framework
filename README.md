@@ -20,7 +20,9 @@ Run `npm run sandbox:start-dev [args]` command to start sandbox app in project r
 
 This project is mini framework for building cli apps fast, it enforces some best practices.
 
-To create basic cli app, you need to instanitiate `CliApp` class, and then on use `command` method on created object. To `command` you need to pass in a string (It will look for that string in arguments given, when sandbox was run, and if it is found then it will execute a callback). You have to call `end` function with callback as paramater, to separate different paths and ensure that callback is called. [Example](./sandbox/index.ts)
+To create basic cli app, you need to instanitiate `CliApp` with command line arguments (\*`process.argv`), and then on use `command` method on created object. To `command` you need to pass in a string (It will look for that string in arguments given, when sandbox was run, and if it is found then it will execute a callback). You have to call `end` function with callback as paramater, to separate different paths and ensure that callback is called. [Example](./sandbox/index.ts)
+
+- Make sure to exclude arguments that are passed automatically. Look at [Example](./sandbox/index.ts)
 
 # Usage
 
