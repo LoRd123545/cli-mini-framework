@@ -1,4 +1,4 @@
-import { compareTwoArrays } from './utils'
+import { shallowCompareTwoArrays } from './utils'
 
 import type { ArgumentCreationOptions, Argument } from './types'
 
@@ -28,7 +28,7 @@ class CliApp {
     console.log(this._userArgs)
     console.log(this._scope)
 
-    if (compareTwoArrays(this._scope, this._userArgs)) {
+    if (shallowCompareTwoArrays(this._scope, this._userArgs)) {
       this._shouldExecuteCallback = true
     }
 
@@ -62,6 +62,7 @@ class CliApp {
     }
 
     this._shouldExecuteCallback = false
+    this._arguments = []
     this._scope = []
   }
 }
