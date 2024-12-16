@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js",
+    "sandbox:dev-start": "tsx sandbox/index.ts",
     "build": "tsc",
     "lint": "eslint ./src",
     "test": "jest"

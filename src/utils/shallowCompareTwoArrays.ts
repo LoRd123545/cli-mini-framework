@@ -1,4 +1,4 @@
-export const compareTwoArrays = (
+export const shallowCompareTwoArrays = (
   arr1: Array<unknown>,
   arr2: Array<unknown>
 ): boolean => {

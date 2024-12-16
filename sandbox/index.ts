@@ -7,14 +7,17 @@ const app = new CliApp(userArgs)
 app
   .scope(['container'])
   .command('start')
+  .args([
+    {
+      name: 'containerName',
+      required: true,
+    },
+    {
+      name: 'containerImage',
+      required: true,
+    },
+  ])
   .end((args) => {
     console.log(args)
     console.log('started container')
-  })
-
-app
-  .scope(['container'])
-  .command('stop')
-  .end(() => {
-    console.log('stopped container')
   })
