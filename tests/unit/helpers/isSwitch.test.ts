@@ -1,4 +1,4 @@
-import { isSwitch } from '../../src/helpers/isSwitch'
+import { isSwitch } from '../../../src/helpers/isSwitch'
 
 
 describe('testing various correct cases of using', () => {

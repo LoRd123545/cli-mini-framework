@@ -1,4 +1,4 @@
-import { shallowCompareTwoArrays } from '../../src/utils/shallowCompareTwoArrays';
+import { shallowCompareTwoArrays } from '../../../src/utils/shallowCompareTwoArrays';
 
 describe ('testing various correct cases of using function', () => {
   test ('tests comparing length functions', () => {
