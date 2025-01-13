@@ -73,7 +73,18 @@ class CliApp {
    * @throws {Error} if length of args and arguments provided by user are not matching
    */
   args(args: ArgumentCreationOptions[]) {
+    const userPath = this._userArgs.slice(0, this._path.length)
+
+    if (shallowCompareTwoArrays(this._path, userPath)) {
+      this._shouldExecuteCallback = true
+    } else {
+      return this
+    }
+
     const userArgs = this._userArgs.slice(this._path.length)
+
+    console.log(userArgs)
+    console.log(args)
 
     if (args.length !== userArgs.length) {
       throw new Error(
@@ -89,16 +100,12 @@ class CliApp {
       })
     }
 
+    console.log(this._arguments)
+
     return this
   }
 
   end(callback: (args: Argument[]) => void) {
-    const userPath = this._userArgs.slice(0, this._path.length)
-
-    if (shallowCompareTwoArrays(this._path, userPath)) {
-      this._shouldExecuteCallback = true
-    }
-
     if (this._shouldExecuteCallback) {
       callback(this._arguments)
     }
