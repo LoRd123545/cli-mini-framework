@@ -1,65 +1,21 @@
-import { CliApp } from '../src/index'
+import { Cli } from '../src/index'
 
 const userArgs = process.argv.slice(2)
 
-const app = new CliApp(userArgs)
+const app = new Cli(userArgs)
 
 app
   .scope(['container'])
-  .command('create')
+  .command('run')
   .args([
-    {
-      name: 'image-name',
-      required: true,
-    },
-    {
-      name: 'container-name',
-      required: true,
-    },
+    { name: 'image', required: true },
+    { name: 'container-name', required: false, defaultValue: 'container' },
   ])
-  .end((args) => {
-    console.log(args)
-    console.log('Container created!')
-  })
-
-app
-  .scope(['container'])
-  .command('start')
-  .args([
-    {
-      name: 'container-name',
-      required: true,
-    },
+  .options([
+    { name: 'opt1', hasValue: true },
+    { name: 'switch1', hasValue: false },
   ])
-  .end((args) => {
+  .end((args, options) => {
     console.log(args)
-    console.log('Container started!')
-  })
-
-app
-  .scope(['container'])
-  .command('stop')
-  .args([
-    {
-      name: 'container-name',
-      required: true,
-    },
-  ])
-  .end((args) => {
-    console.log(args)
-    console.log('Container stopped!')
-  })
-
-app
-  .scope(['image'])
-  .command('build')
-  .args([
-    {
-      name: 'image-name',
-      required: true,
-    },
-  ])
-  .end((args) => {
-    console.log(args)
-    console.log('Image built!')
+    console.log(options)
   })

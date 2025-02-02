@@ -14,7 +14,7 @@ All documentation related to this project (code, best practices etc...) will be 
 
 ## How to run
 
-Run `npm run sandbox:start-dev [args]` command to start sandbox app in project root directory
+Run `npm run sandbox:dev-start [args]` command to start sandbox app in project root directory
 
 ## How to use
 
