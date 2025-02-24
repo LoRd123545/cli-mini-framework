@@ -1,12 +1,12 @@
-import { CliApp } from '../../src/index';
+import { Cli } from '../../src/index';
 
-describe('Memory leak test for CliApp class', () => {
+describe('Memory leak test for Cli class', () => {
   it('should not leak memory when creating and resetting instances', () => {
     const initialMemory = process.memoryUsage().heapUsed;
 
     //                  100 thousands
     for (let i = 0; i < 100000; i++) {
-      const app = new CliApp(['test', 'command']);
+      const app = new Cli(['test', 'command']);
       app
         .scope(['container'])
         .command('create')
@@ -20,10 +20,7 @@ describe('Memory leak test for CliApp class', () => {
             required: true,
           }
         ])
-        .end((args) => {
-          console.log(args)
-          console.log('Container created!')
-        });
+        .end(() => {});
     }
 
     const finalMemory = process.memoryUsage().heapUsed;
@@ -33,12 +30,12 @@ describe('Memory leak test for CliApp class', () => {
     expect(memoryDifference).toBeLessThan(1024 * 1024);
   });
 
-  it('should leak memory when creating and resetting instances', () => {
+  it('should not leak memory when creating and resetting instances', () => {
     const initialMemory = process.memoryUsage().heapUsed;
 
     //                  1 milion
     for (let i = 0; i < 1000000; i++) {
-      const app = new CliApp(['test', 'command']);
+      const app = new Cli(['test', 'command']);
       app
         .scope(['container'])
         .command('create')
@@ -52,16 +49,13 @@ describe('Memory leak test for CliApp class', () => {
             required: true,
           }
         ])
-        .end((args) => {
-          console.log(args)
-          console.log('Container created!')
-        });
+        .end(() => {});
     }
 
     const finalMemory = process.memoryUsage().heapUsed;
     const memoryDifference = finalMemory - initialMemory;
 
     // 1024 * 1024 = 1MB
-    expect(memoryDifference).toBeGreaterThan(1024 * 1024);
+    expect(memoryDifference).toBeLessThan(1024 * 1024);
   });
 });

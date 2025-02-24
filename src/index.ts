@@ -21,7 +21,7 @@ class Cli {
   /**
    * command line arguments that are injected to this class
    */
-  private readonly _userArgs: string[]
+  private _userArgs: string[]
 
   /**
    * array of nouns to indicate command scope (just for organization)
@@ -64,7 +64,6 @@ class Cli {
     this._command = ''
     this._arguments = []
     this._options = []
-
     this._path = []
 
     this._shouldExecuteCallback = false
@@ -199,12 +198,12 @@ class Cli {
     // cleaning up space
     this._shouldExecuteCallback = false
 
-    this._scope = []
+    this._scope = null as unknown as string[]
     this._command = ''
-    this._arguments = []
-    this._options = []
-
-    this._path = []
+    this._arguments = null as unknown as Argument[]
+    this._options = null as unknown as Option[]
+    this._userArgs = null as unknown as string[]
+    this._path = null as unknown as string[]
   }
 
   builder() {
