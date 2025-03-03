@@ -1,5 +1,3 @@
-export type ArgumentCreateDto = {
+export type IArgumentCreateDto = {
   name: string
-  required: boolean
-  defaultValue?: string
 }

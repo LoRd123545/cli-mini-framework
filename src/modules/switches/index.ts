@@ -1,3 +1,3 @@
-export class Option {}
+export class Switch {}
 
 export * from './types'

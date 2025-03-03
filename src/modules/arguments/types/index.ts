@@ -1,5 +1,5 @@
-import type { Argument } from './argument'
+export { IArgument } from './argument'
+export { IArgumentCreateDto } from './create-dto'
 
-import type { ArgumentCreateDto } from './create-dto'
-
-export type { Argument, ArgumentCreateDto }
+export { IDefaultArgument } from './default'
+export { IDefaultArgumentCreateDto } from './default-create-dto'

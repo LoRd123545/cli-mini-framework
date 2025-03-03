@@ -1,17 +1,9 @@
 import { shallowCompareTwoArrays } from './common/utils'
 import { ArgumentException } from './common/exceptions'
-import { areDefaultArgumentsAtTheEnd } from './common/helpers'
 
-import type {
-  ArgumentCreateDto,
-  ArgumentClass,
-  Argument,
-} from './modules/arguments'
-
-import { OptionClass } from './modules/options'
-
-import { CommandClass, Command } from './modules/commands'
-import { Option, OptionCreateDto } from './modules/options/types'
+import type { IArgumentCreateDto, IArgument } from './modules/arguments'
+import { IOption, IOptionCreateDto } from './modules/options/types'
+import { ISwitch, ISwitchCreateDto } from './modules/switches'
 
 class Cli {
   /**
@@ -36,12 +28,14 @@ class Cli {
   /**
    * argument(s) for command (some commands need value(s), just like normal functions)
    */
-  private _arguments: Argument[]
+  private _arguments: IArgument[]
 
   /**
    * array of key-val pairs (options) that will modify command behavior
    */
-  private _options: Option[]
+  private _options: IOption[]
+
+  private _switches: ISwitch[]
 
   /**
    * _scope and _command joined, to save time and space
@@ -64,6 +58,7 @@ class Cli {
     this._command = ''
     this._arguments = []
     this._options = []
+    this._switches = []
 
     this._path = []
 
@@ -101,16 +96,9 @@ class Cli {
    * @param args - expected arguments
    * @throws {Error} if length of args and arguments provided by user are not matching
    */
-  args(args: ArgumentCreateDto[]) {
-    const defaultArgCount = areDefaultArgumentsAtTheEnd(args)
-
-    if (defaultArgCount === false) {
-      throw new ArgumentException(
-        'Default positional arguments, must be at the end'
-      )
-    }
-
+  args(args: IArgumentCreateDto[]) {
     const userPath = this._userArgs.slice(0, this._path.length)
+    const rawArgs = this._userArgs.slice(this._path.length)
 
     if (shallowCompareTwoArrays(this._path, userPath)) {
       this._shouldExecuteCallback = true
@@ -118,52 +106,37 @@ class Cli {
       return this
     }
 
-    const userArgs = this._userArgs.slice(this._path.length)
-
-    // only passes if argument count is in range <args.length - defaultArgCount, args.length>
-    if (
-      userArgs.length > args.length ||
-      userArgs.length < args.length - defaultArgCount
-    ) {
-      if (!userArgs[args.length].startsWith('--')) {
+    if (rawArgs.length > args.length) {
+      if (!rawArgs[args.length].startsWith('--')) {
         throw new ArgumentException(
-          `Expected ${args.length} argument(s), got ${userArgs.length}`
+          `Expected ${args.length} argument(s), got ${rawArgs.length}`
         )
       }
     }
 
     for (let i = 0; i < args.length; i++) {
-      if (args[i].required) {
-        this._arguments.push({
-          name: args[i].name,
-          value: userArgs[i],
-          required: true,
-        })
-      } else {
-        this._arguments.push({
-          name: args[i].name,
-          required: false,
-          defaultValue: args[i].defaultValue || '',
-          value: userArgs[i],
-        })
-      }
+      this._arguments.push({
+        name: args[i].name,
+        value: rawArgs[i],
+      })
     }
 
     return this
   }
 
-  options(options: OptionCreateDto[]) {
-    const rawUserOptions = this._userArgs.slice(
+  options(options: IOptionCreateDto[]) {
+    const rawOptions = this._userArgs.slice(
       this._path.length + this._arguments.length
     )
 
-    for (const rawUserOption of rawUserOptions) {
-      if (!rawUserOption.startsWith('--')) {
+    for (const rawOption of rawOptions) {
+      if (!rawOption.startsWith('--')) {
         throw new Error('options must start with --')
       }
 
-      const rawOption = rawUserOption.substring(2)
-      const [optionName, optionValue] = rawOption.split(this._delimiter)
+      const [optionName, optionValue] = rawOption
+        .substring(2)
+        .split(this._delimiter)
 
       const option = options.find((option) => {
         if (option.name === optionName) {
@@ -175,15 +148,8 @@ class Cli {
         throw new Error(`unknown option: --${optionName}`)
       }
 
-      if (option.hasValue && !optionValue) {
-        throw new Error(`option --${optionName} must have a value`)
-      }
-
-      const optionHasValue = optionValue === undefined ? false : true
-
       this._options.push({
         name: optionName,
-        hasValue: optionHasValue,
         value: optionValue,
       })
     }
@@ -191,9 +157,45 @@ class Cli {
     return this
   }
 
-  end(callback: (args: Argument[], options: Option[]) => void) {
+  switches(switches: ISwitchCreateDto[]) {
+    const rawSwitches = this._userArgs.slice(
+      this._path.length + this._arguments.length + this._options.length
+    )
+
+    for (const rawSwitch of rawSwitches) {
+      if (!rawSwitch.startsWith('--')) {
+        throw new Error('switches must start with --')
+      }
+
+      const switchName = rawSwitch.substring(2)
+
+      const _switch = switches.find((_switch) => {
+        if (_switch.name === switchName) {
+          return true
+        }
+      })
+
+      if (!_switch) {
+        throw new Error(`unknown switch: --${_switch}`)
+      }
+
+      this._switches.push({
+        name: switchName,
+      })
+    }
+
+    return this
+  }
+
+  end(
+    callback: (
+      args: IArgument[],
+      options: IOption[],
+      switches: ISwitch[]
+    ) => void
+  ) {
     if (this._shouldExecuteCallback) {
-      callback(this._arguments, this._options)
+      callback(this._arguments, this._options, this._switches)
     }
 
     // cleaning up space
@@ -205,121 +207,6 @@ class Cli {
     this._options = []
 
     this._path = []
-  }
-
-  builder() {
-    return new CliBuilder(this._userArgs)
-  }
-}
-
-class CliBuilder {
-  private _scope: string[]
-  private _argv: string[]
-
-  constructor(argv: string[]) {
-    this._scope = []
-
-    this._argv = argv
-  }
-
-  scope(scope: string[]) {
-    this._scope.push(...scope)
-
-    return this
-  }
-  command(command: CommandClass | Command) {
-    if (!(command instanceof CommandClass)) {
-      const _command = new CommandClass(command.name, command.aliases)
-      return new CommandBuilder(this._scope, _command, this._argv)
-    }
-
-    return new CommandBuilder(this._scope, command, this._argv)
-  }
-}
-
-class CommandBuilder {
-  private _command: CommandClass
-  private _scope: string[]
-  private _shouldExecuteCallback: boolean
-  private _argv: string[]
-
-  constructor(scope: string[], command: CommandClass, argv: string[]) {
-    this._scope = []
-    this._scope.push(...scope)
-
-    this._command = command
-
-    this._shouldExecuteCallback = false
-
-    this._argv = argv
-  }
-  arg(arg: ArgumentClass) {
-    return new ArgumentBuilder(arg, this._argv)
-  }
-  option(option: OptionClass) {
-    return new OptionBuilder(option, [], this._argv)
-  }
-  end(callback: () => void) {
-    const path = [...this._scope, this._command.command]
-    const userPath = this._argv.slice(0, path.length)
-
-    if (shallowCompareTwoArrays(path, userPath)) callback()
-  }
-}
-
-class ArgumentBuilder {
-  private _args: ArgumentClass[]
-  private _argv: string[]
-
-  constructor(arg: ArgumentClass, argv: string[]) {
-    this._args = []
-    this._args.push(arg)
-
-    this._argv = argv
-  }
-  arg(arg: ArgumentClass) {
-    this._args.push(arg)
-
-    const defaultArgCount = areDefaultArgumentsAtTheEnd(this._args)
-
-    if (defaultArgCount === false) {
-      throw new ArgumentException(
-        'Default positional arguments, must be at the end'
-      )
-    }
-
-    return this
-  }
-  option(option: OptionClass) {
-    return new OptionBuilder(option, this._args, this._argv)
-  }
-  end(callback: (args: ArgumentClass[]) => void) {
-    callback(this._args)
-  }
-}
-
-class OptionBuilder {
-  private _options: OptionClass[]
-  private _args: ArgumentClass[]
-  private _argv: string[]
-
-  constructor(option: OptionClass, args: ArgumentClass[], argv: string[]) {
-    this._options = []
-    this._options.push(option)
-
-    this._args = []
-    this._args.push(...args)
-
-    this._argv = argv
-  }
-
-  option(option: OptionClass) {
-    this._options.push(option)
-
-    return this
-  }
-  end(callback: (args: ArgumentClass[], options: OptionClass[]) => void) {
-    callback(this._args, this._options)
   }
 }
 

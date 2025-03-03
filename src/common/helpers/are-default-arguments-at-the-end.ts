@@ -1,4 +1,4 @@
-import { ArgumentCreateDto } from '@src/types'
+import { ArgumentCreateDto } from '@src/modules/arguments/types'
 
 /**
  *

@@ -1,1 +1,3 @@
-export { Command } from './command'
+export { ICommand } from './command'
+
+export { ICommandCreateDto } from './create-dto'

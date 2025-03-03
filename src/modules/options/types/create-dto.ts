@@ -1,4 +1,3 @@
-export type OptionCreateDto = {
+export type IOptionCreateDto = {
   name: string
-  hasValue: boolean
 }

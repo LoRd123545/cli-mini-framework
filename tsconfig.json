@@ -15,10 +15,10 @@
     "emitDecoratorMetadata": true,
     "baseUrl": ".",
     "paths": {
-      "@src/*": ["src/*"]
+      "@src/*": ["src/*", "src2/*"]
     },
     "typeRoots": ["@types", "./node_modules/@types"]
   },
   "exclude": ["node_modules"],
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "src2/**/*"]
 }

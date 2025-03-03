@@ -1,3 +1,3 @@
-export { OptionCreateDto } from './create-dto'
+export { IOptionCreateDto } from './create-dto'
 
-export { Option } from './option'
+export { IOption } from './option'
