@@ -1,42 +1,37 @@
 import { Cli } from '../src2'
 
-import { Cli as OldCli } from '../src'
-
 const app = new Cli(process.argv.slice(2))
 
 app
-  .scope(['container'])
-  .command('run')
-  .arg('container-name')
-  .option('mode')
-  .option('delete')
-  .option('i')
+  .scope([])
+  .command('version')
+  .arg('arg1')
   .callback((args, opts) => {
-    console.log(args)
-    console.log(opts)
-    console.log('container run!')
+    console.log('version')
+
+    console.log(args, opts)
   })
 
-const oldApp = new OldCli(process.argv.slice(2))
+app
+  .scope([])
+  .command('command1')
+  .arg('arg1')
+  .arg('arg2')
+  .arg('arg3')
+  .callback((args, opts) => {
+    console.log('command1')
 
-oldApp
-  .scope(['container'])
-  .command('run')
-  .args([{ name: 'container-name' }])
-  .options([
-    {
-      name: 'mode',
-    },
-    {
-      name: 'delete',
-    },
-    {
-      name: 'i',
-    },
-  ])
-  .end((args, opts, switches) => {
-    console.log(args)
-    console.log(opts)
-    console.log(switches)
-    console.log('container run!')
+    console.log(args, opts)
+  })
+
+app
+  .scope([])
+  .command('command2')
+  .arg('arg1')
+  .arg('arg2')
+  .option('opt1')
+  .callback((args, opts) => {
+    console.log('command2')
+
+    console.log(args, opts)
   })

@@ -1,13 +1,22 @@
 import { Extractor } from './extractor'
+import { Validator } from './validator'
+import { Transformer } from './transformer'
+
 import { IOption } from './option'
 import { IArgument } from './argument'
 
+import { compareTwoStringArrays } from './utils'
+
 export class Cli {
   private _programArgs: string[]
+
   private _extractor: Extractor
+  private _validator: Validator
+  private _transformer: Transformer
 
   private _scope: string[]
   private _command: string
+  private _userPath: string[]
 
   private _allowedArguments: string[]
   private _arguments: IArgument[]
@@ -16,11 +25,17 @@ export class Cli {
   private _allowedOptions: Set<string>
 
   constructor(programArgs: string[]) {
+    console.log('[internal] program args: ', programArgs)
+
     this._programArgs = programArgs
+
     this._extractor = new Extractor(programArgs)
+    this._validator = new Validator()
+    this._transformer = new Transformer()
 
     this._scope = []
     this._command = ''
+    this._userPath = []
 
     this._allowedArguments = []
     this._arguments = []
@@ -53,34 +68,52 @@ export class Cli {
   }
 
   private validateAndFillOptions() {
-    const extractedOptions = this._extractor.extractOptions(
-      this._scope.length,
-      this._arguments.length
-    )
+    const extractedOptions = this._extractor.extractOptions(this._scope.length, this._arguments.length);
 
-    for (const [, option] of extractedOptions) {
-      if (!this._allowedOptions.has(option.name)) {
-        throw new Error(`unknown option: ${option.name}`)
-      }
-
-      this._options.set(option.name, option)
+    if(!this._validator.validateOptions(extractedOptions)) {
+      throw new Error('Every option must start with -- and be at least 1 character long')
     }
+
+    const options = this._transformer.transformOptions(extractedOptions);
+
+    for(const [optName, option] of options) {
+      if(!this._allowedOptions.has(optName)) {
+        throw new Error(`unknown option: ${optName}`)
+      }
+    }
+
+    this._options = options
+  }
+
+  private validate() {
+    this.validateAndFillArguments()
+    this.validateAndFillOptions()
+  }
+
+  private cleanup() {
+    this._extractor = new Extractor(this._programArgs)
+    this._validator = new Validator()
+    this._transformer = new Transformer()
+
+    this._scope = []
+    this._command = ''
+    this._userPath = []
+
+    this._allowedArguments = []
+    this._arguments = []
+
+    this._options = new Map()
+    this._allowedOptions = new Set()
   }
 
   scope(scope: string[]) {
     const extractedScope = this._extractor.extractScope(scope.length)
-    let doScopesMatch = true
 
-    for (let i = 0; i < extractedScope.length; i++) {
-      if (extractedScope[i] !== scope[i]) {
-        doScopesMatch = false
-        break
-      }
-    }
-
-    if (doScopesMatch) {
+    if (compareTwoStringArrays(extractedScope, scope)) {
       this._scope = extractedScope
     }
+
+    this._userPath = [...extractedScope]
 
     return this
   }
@@ -88,9 +121,15 @@ export class Cli {
   command(commandName: string) {
     const extractedCommand = this._extractor.extractCommand(this._scope.length)
 
+    if(!extractedCommand) {
+      throw new Error('Please provide command')
+    }
+
     if (commandName === extractedCommand) {
       this._command = extractedCommand
     }
+
+    this._userPath.push(extractedCommand)
 
     return this
   }
@@ -108,30 +147,23 @@ export class Cli {
   }
 
   callback(action: (args: IArgument[], opts: Map<string, IOption>) => void) {
-    this.validateAndFillArguments()
-    this.validateAndFillOptions()
-
     let shouldExecute = true
 
     const path = [...this._scope, this._command]
-    const extractedPath = [
-      ...this._extractor.extractScope(this._scope.length),
-      this._extractor.extractCommand(this._scope.length),
-    ]
 
-    if (path.length !== extractedPath.length) {
+    if (!compareTwoStringArrays(path, this._userPath)) {
       shouldExecute = false
     }
 
-    for (let i = 0; i < path.length; i++) {
-      if (path[i] !== extractedPath[i]) {
-        shouldExecute = false
-        break
-      }
+    if (shouldExecute === false) {
+      this.cleanup()
+      return
     }
 
-    if (shouldExecute) {
-      action(this._arguments, this._options)
-    }
+    this.validate()
+
+    action(this._arguments, this._options)
+
+    process.exit()
   }
 }

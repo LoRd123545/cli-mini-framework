@@ -13,8 +13,6 @@ export class Extractor {
   private _programArgs: string[]
 
   constructor(programArgs: string[]) {
-    console.log('[internal] program args: ', programArgs)
-
     this._programArgs = programArgs
   }
 
@@ -32,7 +30,7 @@ export class Extractor {
     return foundScope
   }
 
-  extractCommand(scopeLength: number): string {
+  extractCommand(scopeLength: number): string | undefined {
     return this._programArgs[scopeLength]
   }
 
@@ -46,39 +44,16 @@ export class Extractor {
       commandIndex + argumentCount + 1
     )
 
-    if (rawArguments.length < argumentCount) {
-      return []
-    }
-
     return rawArguments
   }
 
   extractOptions(
     commandIndex: number,
     argumentCount: number
-  ): Map<string, IOption> {
-    const rawOptions: string[] = []
-
-    for (let i = 0; i < this._programArgs.length; i++) {
-      const lastArgumentIndex = commandIndex + argumentCount
-
-      if (this._programArgs[i].startsWith('--')) {
-        if (i > lastArgumentIndex) {
-          rawOptions.push(this._programArgs[i])
-        }
-      }
-    }
-
-    const extractedOptions = new Map<string, IOption>()
-
-    for (const rawOption of rawOptions) {
-      const [optName, optVal] = rawOption.slice(2).split('=')
-
-      extractedOptions.set(optName, {
-        name: optName,
-        value: optVal,
-      })
-    }
+  ): string[] {
+    const extractedOptions: string[] = this._programArgs.slice(
+      commandIndex + argumentCount + 1
+    )
 
     return extractedOptions
   }
