@@ -3,9 +3,9 @@ import { Cli } from '../../src/index';
 describe('Memory leak test for Cli class', () => {
   it('should not leak memory when creating and resetting instances', () => {
     const initialMemory = process.memoryUsage().heapUsed;
-
-    //                  100 thousands
-    for (let i = 0; i < 100000; i++) {
+    const instancesNumber = 100000
+    //                      100 thousands
+    for (let i = 0; i < instancesNumber; i++) {
       const app = new Cli(['test', 'command']);
       app
         .scope(['container'])
@@ -32,9 +32,10 @@ describe('Memory leak test for Cli class', () => {
 
   it('should not leak memory when creating and resetting instances', () => {
     const initialMemory = process.memoryUsage().heapUsed;
+    const instancesNumber = 1000000
 
     //                  1 milion
-    for (let i = 0; i < 1000000; i++) {
+    for (let i = 0; i < instancesNumber; i++) {
       const app = new Cli(['test', 'command']);
       app
         .scope(['container'])

@@ -28,3 +28,7 @@ To create basic cli app, you need to instanitiate `CliApp` with command line arg
 
 This mini-framework is completly free to use, no annotation about creators required.
 [License details](./LICENSE).
+
+
+# Generating log about memory use of app
+Open CMD and use command `npm test tests/unit/index.memory-usage-log.test.ts`, in a moment you will see new file in tests/unit/index.memory-usage-log.test.txt where is data about memory use in `.txt`. Open any spreadsheet (For example Excel) and import this file. Next you have to just create chart.
