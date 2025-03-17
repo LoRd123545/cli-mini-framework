@@ -45,7 +45,7 @@ export class Cli {
     this._options = new Map()
     this._allowedOptions = new Set()
 
-    this._allowedOptions.add('help')
+    
   }
 
   private validateAndFillArguments() {
@@ -90,9 +90,9 @@ export class Cli {
   }
 
   private help() {
+    console.log('--------------')
     console.log('usage: ');
-
-    console.log()
+    console.log('--------------')
 
     if(this._allowedArguments.length > 0) {
       console.log('arguments: ')
@@ -100,14 +100,18 @@ export class Cli {
       for(const allowedArgument of this._allowedArguments) {
         console.log(`<${allowedArgument}>`)
       }
+
+      console.log('--------------')
     }
 
     if(this._allowedOptions.size > 0) {
       console.log('options: ')
 
-      for(const [optionName] of this._allowedOptions) {
-        console.log(`<${optionName}>`)
+      for(const optionName of this._allowedOptions) {
+        console.log(`[${optionName}]`)
       }
+
+      console.log('--------------')
     }
   }
 
@@ -147,6 +151,8 @@ export class Cli {
   }
 
   command(commandName: string) {
+    this._allowedOptions.add('help')
+
     this._path.push(commandName)
 
     const extractedCommand = this._extractor.extractCommand(this._scope.length)

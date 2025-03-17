@@ -1,3 +1,0 @@
-export class Option {}
-
-export * from './types'

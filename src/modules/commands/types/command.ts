@@ -1,4 +1,0 @@
-export type ICommand = {
-  name: string
-  aliases: string[]
-}

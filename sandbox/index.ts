@@ -1,4 +1,4 @@
-import { Cli } from '../src2'
+import { Cli } from '../src'
 
 const app = new Cli(process.argv.slice(2))
 
@@ -7,8 +7,6 @@ app
   .command('version')
   .callback((args, opts) => {
     console.log('v1')
-
-    console.log(args, opts)
   })
 
 app
@@ -17,7 +15,13 @@ app
   .arg('container-name')
   .option('delete')
   .callback((args, opts) => {
-    console.log('container run!')
+    console.log(`container ${args[0].value} run!`)
+  })
 
-    console.log(args, opts)
+app
+  .scope(['container'])
+  .command('delete')
+  .arg('container-name')
+  .callback((args, opts) => {
+    console.log(`deleted container ${args[0].value}`)
   })
