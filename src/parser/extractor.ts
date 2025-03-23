@@ -1,5 +1,3 @@
-import { IOption } from './option'
-
 export class Extractor {
   /**
    * Cmd command model
@@ -34,23 +32,37 @@ export class Extractor {
     return this._programArgs[scopeLength]
   }
 
-  extractArguments(commandIndex: number, argumentCount: number): string[] {
+  extractArguments(
+    commandIndex: number,
+    allowedArgumentCount: number
+  ): string[] {
     if (commandIndex === -1) {
       return []
     }
 
-    const rawArguments = this._programArgs.slice(
-      commandIndex + 1,
-      commandIndex + argumentCount + 1
-    )
+    let sliceIndex = commandIndex + 1 + allowedArgumentCount
+
+    for (
+      let i = commandIndex + 1;
+      i < commandIndex + 1 + allowedArgumentCount;
+      i++
+    ) {
+      if (this._programArgs.length <= i) {
+        break
+      }
+
+      if (this._programArgs[i].startsWith('--')) {
+        sliceIndex = i
+        break
+      }
+    }
+
+    const rawArguments = this._programArgs.slice(commandIndex + 1, sliceIndex)
 
     return rawArguments
   }
 
-  extractOptions(
-    commandIndex: number,
-    argumentCount: number
-  ): string[] {
+  extractOptions(commandIndex: number, argumentCount: number): string[] {
     const extractedOptions: string[] = this._programArgs.slice(
       commandIndex + argumentCount + 1
     )

@@ -1,32 +1,35 @@
-import { Extractor } from './extractor'
-import { Validator } from './validator'
-import { Transformer } from './transformer'
+import { Extractor, Transformer, Validator } from './parser'
 
-import { IOption } from './option'
-import { IArgument } from './argument'
+import { IOption, IOptionMetadata } from './option'
+import { IArgument, IArgumentMetadata } from './argument'
 
 import { compareTwoStringArrays } from './utils'
+import { cliError } from './errors'
 
 export class Cli {
+  private _programName: string
+
   private _programArgs: string[]
 
   private _extractor: Extractor
   private _validator: Validator
   private _transformer: Transformer
 
+  private _commands: Set<string>
   private _scope: string[]
   private _command: string
   private _userPath: string[]
   private _path: string[]
 
-  private _allowedArguments: string[]
+  private _allowedArguments: IArgumentMetadata[]
   private _arguments: IArgument[]
+  private _optionalArgCount: number
 
   private _options: Map<string, IOption>
-  private _allowedOptions: Set<string>
+  private _allowedOptions: Map<string, IOptionMetadata>
 
-  constructor(programArgs: string[]) {
-    console.log('[internal] program args: ', programArgs)
+  constructor(programName: string, programArgs: string[]) {
+    this._programName = programName
 
     this._programArgs = programArgs
 
@@ -34,18 +37,18 @@ export class Cli {
     this._validator = new Validator()
     this._transformer = new Transformer()
 
+    this._commands = new Set()
     this._scope = []
     this._command = ''
     this._userPath = []
     this._path = []
 
-    this._allowedArguments = []
     this._arguments = []
+    this._allowedArguments = []
+    this._optionalArgCount = 0
 
     this._options = new Map()
-    this._allowedOptions = new Set()
-
-    
+    this._allowedOptions = new Map()
   }
 
   private validateAndFillArguments() {
@@ -54,35 +57,59 @@ export class Cli {
       this._allowedArguments.length
     )
 
+    console.log('extracted args: ', extractedArguments)
+
     if (
-      extractedArguments.length > this._allowedArguments.length ||
-      extractedArguments.length < this._allowedArguments.length
+      extractedArguments.length <
+        this._allowedArguments.length - this._optionalArgCount ||
+      extractedArguments.length > this._allowedArguments.length
     ) {
-      throw new Error(
-        `expected ${this._allowedArguments.length} arguments, but got ${extractedArguments.length}`
-      )
+      if (this._optionalArgCount > 0) {
+        cliError(
+          new Error(
+            `expected ${
+              this._allowedArguments.length - this._optionalArgCount
+            } - ${this._allowedArguments.length} arguments, but got ${
+              extractedArguments.length
+            }`
+          )
+        )
+      } else {
+        cliError(
+          new Error(
+            `expected ${this._allowedArguments.length} arguments, but got ${extractedArguments.length}`
+          )
+        )
+      }
     }
 
     for (let i = 0; i < extractedArguments.length; i++) {
       this._arguments.push({
-        name: this._allowedArguments[i],
+        name: this._allowedArguments[i].name,
         value: extractedArguments[i],
       })
     }
   }
 
   private validateAndFillOptions() {
-    const extractedOptions = this._extractor.extractOptions(this._scope.length, this._arguments.length);
+    const extractedOptions = this._extractor.extractOptions(
+      this._scope.length,
+      this._arguments.length
+    )
 
-    if(!this._validator.validateOptions(extractedOptions)) {
-      throw new Error('Every option must start with -- and be at least 1 character long')
+    if (!this._validator.validateOptions(extractedOptions)) {
+      cliError(
+        new Error(
+          'Every option must start with -- and be at least 1 character long'
+        )
+      )
     }
 
-    const options = this._transformer.transformOptions(extractedOptions);
+    const options = this._transformer.transformOptions(extractedOptions)
 
-    for(const [optName, option] of options) {
-      if(!this._allowedOptions.has(optName)) {
-        throw new Error(`unknown option: ${optName}`)
+    for (const [optName] of options) {
+      if (!this._allowedOptions.has(optName)) {
+        cliError(new Error(`unknown option: ${optName}`))
       }
     }
 
@@ -90,28 +117,30 @@ export class Cli {
   }
 
   private help() {
-    console.log('--------------')
-    console.log('usage: ');
-    console.log('--------------')
+    let usageString = `usage: ${this._programName} ${this._command} `
 
-    if(this._allowedArguments.length > 0) {
-      console.log('arguments: ')
-
-      for(const allowedArgument of this._allowedArguments) {
-        console.log(`<${allowedArgument}>`)
-      }
-
-      console.log('--------------')
+    for (const arg of this._allowedArguments) {
+      usageString += `<${arg.name}> `
     }
 
-    if(this._allowedOptions.size > 0) {
-      console.log('options: ')
+    for (const [optionName] of this._allowedOptions) {
+      usageString += `[--${optionName}] `
+    }
 
-      for(const optionName of this._allowedOptions) {
-        console.log(`[${optionName}]`)
-      }
+    console.log(usageString)
 
-      console.log('--------------')
+    console.log(`\n${this._command} - some description`)
+
+    console.log('\nargs:')
+
+    for (const arg of this._allowedArguments) {
+      console.log(`${arg.name} - ${arg.description || arg.name}`)
+    }
+
+    console.log('\noptions:')
+
+    for (const [optionName, option] of this._allowedOptions) {
+      console.log(`${optionName} - ${option.description || optionName}`)
     }
   }
 
@@ -131,9 +160,10 @@ export class Cli {
 
     this._allowedArguments = []
     this._arguments = []
+    this._optionalArgCount = 0
 
     this._options = new Map()
-    this._allowedOptions = new Set()
+    this._allowedOptions = new Map()
   }
 
   scope(scope: string[]) {
@@ -151,33 +181,61 @@ export class Cli {
   }
 
   command(commandName: string) {
-    this._allowedOptions.add('help')
-
+    this._commands.add(commandName)
+    this._allowedOptions.set('help', { name: 'help' })
     this._path.push(commandName)
 
     const extractedCommand = this._extractor.extractCommand(this._scope.length)
 
-    if(!extractedCommand) {
-      throw new Error('Please provide command')
+    if (!extractedCommand) {
+      cliError(new Error('Please provide command'))
     }
+
+    // if (!this._commands.has(extractedCommand as string)) {
+    //   cliError(new Error(`unknown command: ${extractedCommand}`))
+    // }
 
     if (commandName === extractedCommand) {
       this._command = extractedCommand
     }
 
-    this._userPath.push(extractedCommand)
+    this._userPath.push(extractedCommand as string)
 
     return this
   }
 
-  arg(argName: string) {
-    this._allowedArguments.push(argName)
+  arg(arg: string | IArgumentMetadata) {
+    if (typeof arg === 'string') {
+      this._allowedArguments.push({
+        name: arg,
+      })
+    } else {
+      this._allowedArguments.push(arg)
+    }
 
     return this
   }
 
-  option(optionName: string) {
-    this._allowedOptions.add(optionName)
+  optionalArg(arg: string | IArgumentMetadata) {
+    this._optionalArgCount++
+
+    if (typeof arg === 'string') {
+      this._allowedArguments.push({
+        name: arg,
+      })
+    } else {
+      this._allowedArguments.push(arg)
+    }
+
+    return this
+  }
+
+  option(option: string | IOptionMetadata) {
+    if (typeof option === 'string') {
+      this._allowedOptions.set(option, { name: option })
+    } else {
+      this._allowedOptions.set(option.name, option)
+    }
 
     return this
   }
@@ -196,11 +254,11 @@ export class Cli {
 
     this.validate()
 
-    if(this._options.has('help')) {
+    if (this._options.has('help')) {
       this.help()
+    } else {
+      action(this._arguments, this._options)
     }
-
-    action(this._arguments, this._options)
 
     process.exit()
   }

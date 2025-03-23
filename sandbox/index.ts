@@ -1,27 +1,17 @@
 import { Cli } from '../src'
 
-const app = new Cli(process.argv.slice(2))
+const app = new Cli('example', process.argv.slice(2))
 
 app
-  .scope([])
-  .command('version')
-  .callback((args, opts) => {
-    console.log('v1')
-  })
-
-app
-  .scope(['container'])
-  .command('run')
-  .arg('container-name')
+  .scope(['scope1'])
+  .command('command1')
+  .arg('arg-1')
+  .arg('arg-2')
+  .optionalArg('opt-arg-1')
+  .optionalArg('opt-arg-2')
+  .optionalArg('opt-arg-3')
   .option('delete')
   .callback((args, opts) => {
-    console.log(`container ${args[0].value} run!`)
-  })
-
-app
-  .scope(['container'])
-  .command('delete')
-  .arg('container-name')
-  .callback((args, opts) => {
-    console.log(`deleted container ${args[0].value}`)
+    console.log(args)
+    console.log(opts)
   })
