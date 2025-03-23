@@ -157,6 +157,7 @@ export class Cli {
     this._scope = []
     this._command = ''
     this._userPath = []
+    this._path = []
 
     this._allowedArguments = []
     this._arguments = []
@@ -190,10 +191,6 @@ export class Cli {
     if (!extractedCommand) {
       cliError(new Error('Please provide command'))
     }
-
-    // if (!this._commands.has(extractedCommand as string)) {
-    //   cliError(new Error(`unknown command: ${extractedCommand}`))
-    // }
 
     if (commandName === extractedCommand) {
       this._command = extractedCommand

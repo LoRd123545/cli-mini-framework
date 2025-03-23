@@ -14,4 +14,13 @@ app
   .callback((args, opts) => {
     console.log(args)
     console.log(opts)
+
+    console.log('scope 1 command 1')
   })
+
+app
+  .scope(['scope2'])
+  .command('command1')
+  .callback(() => console.log('scope 2 command 1'))
+
+app.command('command').callback(() => console.log('command'))
