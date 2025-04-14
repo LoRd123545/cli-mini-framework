@@ -57,8 +57,6 @@ export class Cli {
       this._allowedArguments.length
     )
 
-    console.log('extracted args: ', extractedArguments)
-
     if (
       extractedArguments.length <
         this._allowedArguments.length - this._optionalArgCount ||
